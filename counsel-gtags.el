@@ -212,6 +212,26 @@
     (goto-char (point-min))
     (forward-line (1- (plist-get context :line)))))
 
+;;;###autoload
+(defun counsel-gtags-create-tags (rootdir label)
+  "Create tag files tags in `rootdir'. This command is asynchronous."
+  (interactive
+   (list (read-directory-name "Directory: " nil nil t)
+         (counsel-gtags--select-gtags-label)))
+  (let* ((default-directory rootdir)
+         (proc-buf (get-buffer-create " *counsel-gtags-tag-create*"))
+         (proc (start-file-process
+                "counsel-gtags-tag-create" proc-buf
+                "gtags" "-q" (concat "--gtagslabel=" label))))
+    (set-process-sentinel
+     proc
+     (lambda (p _event)
+       (when (eq (process-status p) 'exit)
+         (kill-buffer proc-buf)
+         (message "%s: creating tag files(label: %s) in %s"
+                  (if (zerop (process-exit-status p)) "Success" "Failed")
+                  label rootdir))))))
+
 (provide 'counsel-gtags)
 
 ;;; counsel-gtags.el ends here

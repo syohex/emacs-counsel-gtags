@@ -6,7 +6,7 @@ This package is still developing.
 
 - [X] Basic commands
 - [ ] find file command
-- [ ] Tag command
+- [X] Tag command
 - [ ] `GTAGSLIBPATH` support
 - [ ] History command
 - [ ] Tramp support
