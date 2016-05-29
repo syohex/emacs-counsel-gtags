@@ -49,14 +49,12 @@
   '((definition . "Find Definition: ")
     (reference  . "Find Reference: ")
     (pattern    . "Find Pattern: ")
-    (symbol     . "Find Symbol: ")
-    (find-file  . "Find File: ")))
+    (symbol     . "Find Symbol: ")))
 
 (defconst counsel-gtags--complete-options
   '((reference . "-r")
     (symbol    . "-s")
-    (pattern   . "-g")
-    (find-file . "-Poa")))
+    (pattern   . "-g")))
 
 (defvar counsel-gtags--context nil)
 
@@ -84,24 +82,21 @@
 (defsubst counsel-gtags--windows-p ()
   (memq system-type '(windows-nt ms-dos)))
 
-(defun counsel-gtags--set-absolete-option-p ()
-  (or (eq counsel-gtags-path-style 'absolete)
+(defun counsel-gtags--set-absolute-option-p ()
+  (or (eq counsel-gtags-path-style 'absolute)
       (and (counsel-gtags--windows-p)
            (getenv "GTAGSLIBPATH"))))
 
 (defun counsel-gtags--command-options (type)
-  (let ((find-file-p (eq type 'find-file))
-        options)
-    (unless find-file-p
-      (push "--result=grep" options))
+  (let ((options '("--result=grep")))
     (let ((opt (assoc-default type counsel-gtags--complete-options)))
       (when opt
         (push opt options)))
-    (when (counsel-gtags--set-absolete-option-p)
+    (when (counsel-gtags--set-absolute-option-p)
       (push "-a" options))
     (when counsel-gtags-ignore-case
       (push "-i" options))
-    (when (and current-prefix-arg (not find-file-p))
+    (when current-prefix-arg ;; XXX
       (push "-l" options))
     (when (getenv "GTAGSLIBPATH")
       (push "-T" options))
@@ -135,12 +130,12 @@
      (back-to-indentation))))
 
 (defun counsel-gtags--read-tag (type)
-  (let ((tagname (thing-at-point 'symbol))
+  (let ((default-val (thing-at-point 'symbol))
         (prompt (assoc-default type counsel-gtags--prompts))
         (comp-fn (lambda (string)
                    (counsel-gtags--complete-candidates string type))))
     (ivy-read prompt comp-fn
-              :initial-input tagname
+              :initial-input default-val
               :dynamic-collection t
               :unwind (lambda ()
                         (counsel-delete-process)
@@ -203,6 +198,46 @@
   (interactive
    (list (counsel-gtags--read-tag 'symbol)))
   (counsel-gtags--select-file 'symbol tagname))
+
+(defconst counsel-gtags--include-regexp
+  "\\`\\s-*#\\(?:include\\|import\\)\\s-*[\"<]\\(?:[./]*\\)?\\(.*?\\)[\">]")
+
+(defun counsel-gtags--default-file-name ()
+  (let ((line (buffer-substring-no-properties
+               (line-beginning-position) (line-end-position))))
+    (when (string-match counsel-gtags--include-regexp line)
+      (match-string-no-properties 1 line))))
+
+(defun counsel-gtags--read-file-name ()
+  (let ((default-file (counsel-gtags--default-file-name))
+        (candidates
+         (with-temp-buffer
+           (let* ((options (cl-case counsel-gtags-path-style
+                             (absolute "-Poa")
+                             (root "-Poc")
+                             (relative ""))))
+             (unless (zerop (process-file "global" nil t nil options))
+               (error "Failed: collect file names."))
+             (goto-char (point-min))
+             (let (files)
+               (while (not (eobp))
+                 (push (buffer-substring-no-properties (point) (line-end-position)) files)
+                 (forward-line 1))
+               (reverse files))))))
+    (ivy-read "Find File: " candidates
+              :initial-input default-file)))
+
+(defun counsel-gtags--default-directory ()
+  (cl-case counsel-gtags-path-style
+    ((relative absolute) default-directory)
+    (root (counsel-gtags--root))))
+
+;;;###autoload
+(defun counsel-gtags-find-file (filename)
+  (interactive
+   (list (counsel-gtags--read-file-name)))
+  (let ((default-directory (counsel-gtags--default-directory)))
+    (find-file filename)))
 
 ;;;###autoload
 (defun counsel-gtags-pop ()
