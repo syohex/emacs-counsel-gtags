@@ -27,6 +27,7 @@
 ;;; Code:
 
 (require 'counsel)
+(require 'cl-lib)
 
 (declare-function cygwin-convert-file-name-from-windows "cygw32.c")
 (declare-function cygwin-convert-file-name-to-windows "cygw32.c")
