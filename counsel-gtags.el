@@ -5,7 +5,7 @@
 ;; Author: Syohei YOSHIDA <syohex@gmail.com>
 ;; URL: https://github.com/syohex/emacs-counsel-gtags
 ;; Version: 0.01
-;; Package-Requires: ((emacs "24") (counsel "0.8.0"))
+;; Package-Requires: ((emacs "24.3") (counsel "0.8.0"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
