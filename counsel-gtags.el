@@ -32,15 +32,18 @@
 (declare-function cygwin-convert-file-name-to-windows "cygw32.c")
 
 (defgroup counsel-gtags nil
-  "counsel for GNU Global"
+  "`counsel' for GNU Global"
   :group 'counsel)
 
 (defcustom counsel-gtags-ignore-case nil
-  ""
+  "Ignore case in search command."
   :type 'boolean)
 
 (defcustom counsel-gtags-path-style 'root
-  ""
+  "Candidates path style.
+  - `root' shows path from root where tag files are
+  - `relative' shows path from current directory
+  - `absolute' shows absolute path."
   :type '(choice (const :tag "Root of the current project" root)
                  (const :tag "Relative from the current directory" relative)
                  (const :tag "Absolute Path" absolute)))
