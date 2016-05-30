@@ -171,10 +171,10 @@
     nil))
 
 (defun counsel-gtags--select-file (type tagname)
-  (let* ((tagroot (counsel-gtags--root))
+  (let* ((root (counsel-gtags--default-directory))
          (encoding buffer-file-coding-system)
          (comp-fn (lambda (_string)
-                    (let ((default-directory tagroot)) ;; ???
+                    (let ((default-directory root))
                       (counsel-gtags--execute type tagname encoding)))))
     (ivy-read "Pattern: " comp-fn
               :dynamic-collection t
