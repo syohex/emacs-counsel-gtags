@@ -206,14 +206,14 @@
 (defconst counsel-gtags--include-regexp
   "\\`\\s-*#\\(?:include\\|import\\)\\s-*[\"<]\\(?:[./]*\\)?\\(.*?\\)[\">]")
 
-(defun counsel-gtags--default-file-name ()
+(defun counsel-gtags--include-file ()
   (let ((line (buffer-substring-no-properties
                (line-beginning-position) (line-end-position))))
     (when (string-match counsel-gtags--include-regexp line)
       (match-string-no-properties 1 line))))
 
 (defun counsel-gtags--read-file-name ()
-  (let ((default-file (counsel-gtags--default-file-name))
+  (let ((default-file (counsel-gtags--include-file))
         (candidates
          (with-temp-buffer
            (let* ((options (cl-case counsel-gtags-path-style
