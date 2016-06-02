@@ -91,8 +91,10 @@
       (and (counsel-gtags--windows-p)
            (getenv "GTAGSLIBPATH"))))
 
-(defun counsel-gtags--command-options (type)
+(defun counsel-gtags--command-options (type &optional extra-options)
   (let ((options '("--result=grep")))
+    (when extra-options
+      (setq options (append extra-options options)))
     (let ((opt (assoc-default type counsel-gtags--complete-options)))
       (when opt
         (push opt options)))
@@ -162,8 +164,8 @@
 (defsubst counsel-gtags--construct-command (options &optional input)
   (mapconcat #'shell-quote-argument (append '("global") options (list input)) " "))
 
-(defun counsel-gtags--execute (type tagname encoding)
-  (let* ((options (counsel-gtags--command-options type))
+(defun counsel-gtags--execute (type tagname encoding extra-options)
+  (let* ((options (counsel-gtags--command-options type extra-options))
          (cmd (counsel-gtags--construct-command (reverse options) tagname))
          (default-directory default-directory)
          (coding-system-for-read encoding)
@@ -171,12 +173,12 @@
     (counsel--async-command cmd nil)
     nil))
 
-(defun counsel-gtags--select-file (type tagname)
+(defun counsel-gtags--select-file (type tagname &optional extra-options)
   (let* ((root (counsel-gtags--default-directory))
          (encoding buffer-file-coding-system)
          (comp-fn (lambda (_string)
                     (let ((default-directory root))
-                      (counsel-gtags--execute type tagname encoding)))))
+                      (counsel-gtags--execute type tagname encoding extra-options)))))
     (ivy-read "Pattern: " comp-fn
               :dynamic-collection t
               :unwind (lambda ()
@@ -270,6 +272,19 @@
          (message "%s: creating tag files(label: %s) in %s"
                   (if (zerop (process-exit-status p)) "Success" "Failed")
                   label rootdir))))))
+
+(defun counsel-gtags--from-here (tagname)
+  (let* ((line (line-number-at-pos))
+         (tag-name (thing-at-point 'symbol))
+         (from-here-opt (format "--from-here=%d:%s" line (buffer-file-name))))
+    (counsel-gtags--select-file 'from-here tagname (list from-here-opt))))
+
+;;;###autoload
+(defun counsel-gtags-dwim ()
+  (interactive)
+  (if (and (buffer-file-name) (thing-at-point 'symbol))
+      (counsel-gtags--from-here (thing-at-point 'symbol))
+    (call-interactively 'counsel-gtags-find-definition)))
 
 (provide 'counsel-gtags)
 
