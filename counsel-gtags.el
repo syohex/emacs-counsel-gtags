@@ -275,7 +275,6 @@
 
 (defun counsel-gtags--from-here (tagname)
   (let* ((line (line-number-at-pos))
-         (tag-name (thing-at-point 'symbol))
          (from-here-opt (format "--from-here=%d:%s" line (buffer-file-name))))
     (counsel-gtags--select-file 'from-here tagname (list from-here-opt))))
 
