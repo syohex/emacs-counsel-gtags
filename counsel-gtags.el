@@ -111,9 +111,9 @@
 (defun counsel-gtags--complete-candidates (string type)
   (let ((cmd-options (counsel-gtags--command-options type)))
     (push "-c" cmd-options)
-    (push string cmd-options)
+    (push (shell-quote-argument string) cmd-options)
     (counsel--async-command
-     (mapconcat #'shell-quote-argument (cons "global" (reverse cmd-options)) " "))
+     (mapconcat #'identity (cons "global" (reverse cmd-options)) " "))
     nil))
 
 (defun counsel-gtags--file-and-line (candidate)
@@ -162,7 +162,7 @@
                                       dir)))))))
 
 (defsubst counsel-gtags--construct-command (options &optional input)
-  (mapconcat #'shell-quote-argument (append '("global") options (list input)) " "))
+  (mapconcat #'identity (append '("global") options (list (shell-quote-argument input))) " "))
 
 (defun counsel-gtags--execute (type tagname encoding extra-options)
   (let* ((options (counsel-gtags--command-options type extra-options))
