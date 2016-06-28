@@ -61,6 +61,8 @@
     (pattern   . "-g")))
 
 (defvar counsel-gtags--context nil)
+(defvar counsel-gtags--original-default-directory nil
+  "default-directory where command is invoked.")
 
 (defun counsel-gtags--select-gtags-label ()
   (let ((labels '("default" "native" "ctags" "pygments")))
@@ -130,10 +132,11 @@
    (swiper--cleanup)
    (cl-destructuring-bind (file line) (counsel-gtags--file-and-line candidate)
      (push (list :file file :line line) counsel-gtags--context)
-     (find-file file)
-     (goto-char (point-min))
-     (forward-line (1- line))
-     (back-to-indentation))))
+     (let ((default-directory counsel-gtags--original-default-directory))
+       (find-file file)
+       (goto-char (point-min))
+       (forward-line (1- line))
+       (back-to-indentation)))))
 
 (defun counsel-gtags--read-tag (type)
   (let ((default-val (thing-at-point 'symbol))
@@ -233,9 +236,10 @@
               :initial-input default-file)))
 
 (defun counsel-gtags--default-directory ()
-  (cl-case counsel-gtags-path-style
-    ((relative absolute) default-directory)
-    (root (counsel-gtags--root))))
+  (setq counsel-gtags--original-default-directory
+        (cl-case counsel-gtags-path-style
+          ((relative absolute) default-directory)
+          (root (counsel-gtags--root)))))
 
 ;;;###autoload
 (defun counsel-gtags-find-file (filename)
