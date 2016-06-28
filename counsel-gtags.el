@@ -155,8 +155,7 @@
           (unless (zerop (process-file "global" nil t nil "-p"))
             (error "GTAGS not found"))
           (goto-char (point-min))
-          (let ((dir (buffer-substring-no-properties
-                      (line-beginning-position) (line-end-position))))
+          (let ((dir (buffer-substring-no-properties (point) (line-end-position))))
             (file-name-as-directory (if (eq system-type 'cygwin)
                                         (cygwin-convert-file-name-from-windows dir)
                                       dir)))))))
