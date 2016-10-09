@@ -49,6 +49,14 @@
                  (const :tag "Relative from the current directory" relative)
                  (const :tag "Absolute Path" absolute)))
 
+(defcustom counsel-gtags-prefix-key "\C-c"
+  "If non-nil, it is used for the prefix key of gtags-xxx command."
+  :type 'string)
+
+(defcustom counsel-gtags-suggested-key-mapping nil
+  "If non-nil, suggested key mapping is enabled."
+  :type 'boolean)
+
 (defconst counsel-gtags--prompts
   '((definition . "Find Definition: ")
     (reference  . "Find Reference: ")
@@ -287,6 +295,37 @@
   (if (and (buffer-file-name) (thing-at-point 'symbol))
       (counsel-gtags--from-here (thing-at-point 'symbol))
     (call-interactively 'counsel-gtags-find-definition)))
+
+(defvar counsel-gtags-mode-name " CounselGtags")
+(defvar counsel-gtags-mode-map (make-sparse-keymap))
+
+;;;###autoload
+(define-minor-mode counsel-gtags-mode ()
+  "Enable counsel-gtags"
+  :init-value nil
+  :global     nil
+  :keymap     counsel-gtags-mode-map
+  :lighter    counsel-gtags-mode-name)
+
+;; Key mapping of gtags-mode.
+(when counsel-gtags-suggested-key-mapping
+  ;; Current key mapping.
+  (let ((command-table '(("s" . counsel-gtags-find-symbol)
+                         ("r" . counsel-gtags-find-reference)
+                         ("t" . counsel-gtags-find-definition)
+                         ("d" . counsel-gtags-find-definition)))
+        (key-func (if (string-prefix-p "\\" counsel-gtags-prefix-key)
+                      #'concat
+                    (lambda (prefix key) (kbd (concat prefix " " key))))))
+    (cl-loop for (key . command) in command-table
+             do
+             (define-key counsel-gtags-mode-map (funcall key-func counsel-gtags-prefix-key key) command))
+
+    ;; common
+    (define-key counsel-gtags-mode-map "\C-]" 'counsel-gtags--from-here)
+    (define-key counsel-gtags-mode-map "\C-t" 'counsel-gtags-pop)
+    (define-key counsel-gtags-mode-map "\e*" 'counsel-gtags-pop)
+    (define-key counsel-gtags-mode-map "\e." 'counsel-gtags-find-definition)))
 
 (provide 'counsel-gtags)
 
