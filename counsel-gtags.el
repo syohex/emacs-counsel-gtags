@@ -49,6 +49,16 @@
                  (const :tag "Relative from the current directory" relative)
                  (const :tag "Absolute Path" absolute)))
 
+(defcustom counsel-gtags-auto-update nil
+  "*If non-nil, tag files are updated whenever a file is saved."
+  :type 'boolean)
+
+(defcustom counsel-gtags-update-interval-second 60
+  "Tags are updated in `after-save-hook' if this seconds is passed from last update.
+Always update if value of this variable is nil."
+  :type '(choice (integer :tag "Update interval seconds")
+                 (boolean :tag "Update every time" nil)))
+
 (defcustom counsel-gtags-prefix-key "\C-c"
   "If non-nil, it is used for the prefix key of gtags-xxx command."
   :type 'string)
@@ -68,6 +78,7 @@
     (symbol    . "-s")
     (pattern   . "-g")))
 
+(defvar counsel-gtags--last-update-time 0)
 (defvar counsel-gtags--context nil)
 (defvar counsel-gtags--original-default-directory nil
   "default-directory where command is invoked.")
@@ -139,7 +150,7 @@
   (with-ivy-window
     (swiper--cleanup)
     (cl-destructuring-bind (file line) (counsel-gtags--file-and-line candidate)
-      (push (list :file (buffer-file-name) :line (line-number-at-pos))
+      (push (list :file (counsel-gtags--real-file-name) :line (line-number-at-pos))
             counsel-gtags--context)
       (let ((default-directory counsel-gtags--original-default-directory))
         (find-file file)
@@ -265,6 +276,13 @@
     (goto-char (point-min))
     (forward-line (1- (plist-get context :line)))))
 
+(defun counsel-gtags--make-gtags-sentinel (action)
+  (lambda (process _event)
+    (when (eq (process-status process) 'exit)
+      (if (zerop (process-exit-status process))
+          (message "Success: %s TAGS" action)
+        (message "Failed: %s TAGS(%d)" action (process-exit-status process))))))
+
 ;;;###autoload
 (defun counsel-gtags-create-tags (rootdir label)
   "Create tag files tags in `rootdir'. This command is asynchronous."
@@ -278,16 +296,61 @@
                 "gtags" "-q" (concat "--gtagslabel=" label))))
     (set-process-sentinel
      proc
-     (lambda (p _event)
-       (when (eq (process-status p) 'exit)
-         (kill-buffer proc-buf)
-         (message "%s: creating tag files(label: %s) in %s"
-                  (if (zerop (process-exit-status p)) "Success" "Failed")
-                  label rootdir))))))
+     (counsel-gtags--make-gtags-sentinel 'create))))
+
+
+(defun counsel-gtags--real-file-name ()
+  (let ((buffile (buffer-file-name)))
+    (unless buffile
+      (error "This buffer is not related to file."))
+    (if (file-remote-p buffile)
+        (tramp-file-name-localname (tramp-dissect-file-name buffile))
+      (file-truename buffile))))
+
+(defun counsel-gtags--read-tag-directory ()
+  (let ((dir (read-directory-name "Directory tag generated: " nil nil t)))
+    ;; On Windows, "gtags d:/tmp" work, but "gtags d:/tmp/" doesn't
+    (directory-file-name (expand-file-name dir))))
+
+(defsubst counsel-gtags--how-to-update-tags ()
+  (cl-case (prefix-numeric-value current-prefix-arg)
+    (4 'entire-update)
+    (16 'generate-other-directory)
+    (otherwise 'single-update)))
+
+(defun counsel-gtags--update-tags-command (how-to)
+  (cl-case how-to
+    (entire-update '("global" "-u"))
+    (generate-other-directory (list "gtags" (counsel-gtags--read-tag-directory)))
+    (single-update (list "global" "--single-update" (counsel-gtags--real-file-name)))))
+
+(defun counsel-gtags--update-tags-p (how-to interactive-p current-time)
+  (or interactive-p
+      (and (eq how-to 'single-update)
+           (buffer-file-name)
+           (or (not counsel-gtags-update-interval-second)
+               (>= (- current-time counsel-gtags--last-update-time)
+                   counsel-gtags-update-interval-second)))))
+
+;;;###autoload
+(defun counsel-gtags-update-tags ()
+  "Update TAG file. Update All files with `C-u' prefix.
+Generate new TAG file in selected directory with `C-u C-u'"
+  (interactive)
+  (let ((how-to (counsel-gtags--how-to-update-tags))
+        (interactive-p (called-interactively-p 'interactive))
+        (current-time (float-time (current-time))))
+    (when (counsel-gtags--update-tags-p how-to interactive-p current-time)
+      (let* ((cmds (counsel-gtags--update-tags-command how-to))
+             (proc (apply #'start-file-process "counsel-gtags-update-tag" nil cmds)))
+        (if (not proc)
+            (message "Failed: %s" (string-join cmds " "))
+          (set-process-sentinel proc (counsel-gtags--make-gtags-sentinel 'update))
+          (setq counsel-gtags--last-update-time current-time))))))
 
 (defun counsel-gtags--from-here (tagname)
   (let* ((line (line-number-at-pos))
-         (from-here-opt (format "--from-here=%d:%s" line (buffer-file-name))))
+         (from-here-opt (format "--from-here=%d:%s" line (counsel-gtags--real-file-name))))
     (counsel-gtags--select-file 'from-here tagname (list from-here-opt))))
 
 ;;;###autoload
@@ -306,7 +369,12 @@
   :init-value nil
   :global     nil
   :keymap     counsel-gtags-mode-map
-  :lighter    counsel-gtags-mode-name)
+  :lighter    counsel-gtags-mode-name
+  (if counsel-gtags-mode
+      (when counsel-gtags-auto-update
+        (add-hook 'after-save-hook 'counsel-gtags-update-tags nil t))
+    (when counsel-gtags-auto-update
+      (remove-hook 'after-save-hook 'counsel-gtags-update-tags t))))
 
 ;; Key mapping of gtags-mode.
 (when counsel-gtags-suggested-key-mapping
