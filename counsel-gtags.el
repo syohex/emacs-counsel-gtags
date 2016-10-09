@@ -139,7 +139,8 @@
   (with-ivy-window
     (swiper--cleanup)
     (cl-destructuring-bind (file line) (counsel-gtags--file-and-line candidate)
-      (push (list :file file :line line) counsel-gtags--context)
+      (push (list :file (buffer-file-name) :line (line-number-at-pos))
+            counsel-gtags--context)
       (let ((default-directory counsel-gtags--original-default-directory))
         (find-file file)
         (goto-char (point-min))
