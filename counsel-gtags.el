@@ -344,7 +344,7 @@ Generate new TAG file in selected directory with `C-u C-u'"
       (let* ((cmds (counsel-gtags--update-tags-command how-to))
              (proc (apply #'start-file-process "counsel-gtags-update-tag" nil cmds)))
         (if (not proc)
-            (message "Failed: %s" (string-join cmds " "))
+            (message "Failed: %s" (mapconcat 'identity cmds " "))
           (set-process-sentinel proc (counsel-gtags--make-gtags-sentinel 'update))
           (setq counsel-gtags--last-update-time current-time))))))
 
