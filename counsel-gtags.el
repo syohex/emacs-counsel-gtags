@@ -44,9 +44,9 @@
 
 (defcustom counsel-gtags-path-style 'root
   "Candidates path style.
-  - `root' shows path from root where tag files are
-  - `relative' shows path from current directory
-  - `absolute' shows absolute path."
+- `root' shows path from root where tag files are
+- `relative' shows path from current directory
+- `absolute' shows absolute path."
   :type '(choice (const :tag "Root of the current project" root)
                  (const :tag "Relative from the current directory" relative)
                  (const :tag "Absolute Path" absolute)))
@@ -56,7 +56,8 @@
   :type 'boolean)
 
 (defcustom counsel-gtags-update-interval-second 60
-  "Tags are updated in `after-save-hook' if this seconds is passed from last update.
+  "Tag updating interval seconds.
+Tags are updated at `after-save-hook' after the seconds passed from last update.
 Always update if value of this variable is nil."
   :type '(choice (integer :tag "Update interval seconds")
                  (boolean :tag "Update every time" nil)))
@@ -83,7 +84,7 @@ Always update if value of this variable is nil."
 (defvar counsel-gtags--last-update-time 0)
 (defvar counsel-gtags--context nil)
 (defvar counsel-gtags--original-default-directory nil
-  "default-directory where command is invoked.")
+  "Last `default-directory' where command is invoked.")
 
 (defun counsel-gtags--select-gtags-label ()
   (let ((labels '("default" "native" "ctags" "pygments")))
@@ -213,18 +214,21 @@ Always update if value of this variable is nil."
 
 ;;;###autoload
 (defun counsel-gtags-find-definition (tagname)
+  "Find `tagname' definition."
   (interactive
    (list (counsel-gtags--read-tag 'definition)))
   (counsel-gtags--select-file 'definition tagname))
 
 ;;;###autoload
 (defun counsel-gtags-find-reference (tagname)
+  "Find `tagname' references."
   (interactive
    (list (counsel-gtags--read-tag 'reference)))
   (counsel-gtags--select-file 'reference tagname))
 
 ;;;###autoload
 (defun counsel-gtags-find-symbol (tagname)
+  "Find `tagname' references."
   (interactive
    (list (counsel-gtags--read-tag 'symbol)))
   (counsel-gtags--select-file 'symbol tagname))
@@ -265,6 +269,7 @@ Always update if value of this variable is nil."
 
 ;;;###autoload
 (defun counsel-gtags-find-file (filename)
+  "Find `filename' from tagged files."
   (interactive
    (list (counsel-gtags--read-file-name)))
   (let ((default-directory (counsel-gtags--default-directory)))
@@ -272,6 +277,7 @@ Always update if value of this variable is nil."
 
 ;;;###autoload
 (defun counsel-gtags-pop ()
+  "Jump back to previous point."
   (interactive)
   (let ((context (pop counsel-gtags--context)))
     (find-file (plist-get context :file))
@@ -357,6 +363,8 @@ Generate new TAG file in selected directory with `C-u C-u'"
 
 ;;;###autoload
 (defun counsel-gtags-dwim ()
+  "Call the counsel-gtags command by current context(Do What I Mean)
+by global --from-here option."
   (interactive)
   (if (and (buffer-file-name) (thing-at-point 'symbol))
       (counsel-gtags--from-here (thing-at-point 'symbol))
@@ -367,7 +375,8 @@ Generate new TAG file in selected directory with `C-u C-u'"
 
 ;;;###autoload
 (define-minor-mode counsel-gtags-mode ()
-  "Enable counsel-gtags"
+  "Monor mode of counsel-gtags. If `counsel-gtags-update-tags' is non-nil, then
+updating gtags after saving buffer."
   :init-value nil
   :global     nil
   :keymap     counsel-gtags-mode-map
