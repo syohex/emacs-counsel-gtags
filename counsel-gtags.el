@@ -31,6 +31,8 @@
 
 (declare-function cygwin-convert-file-name-from-windows "cygw32.c")
 (declare-function cygwin-convert-file-name-to-windows "cygw32.c")
+(declare-function tramp-file-name-localname "tramp")
+(declare-function tramp-dissect-file-name "tramp")
 
 (defgroup counsel-gtags nil
   "`counsel' for GNU Global"
