@@ -1,4 +1,4 @@
-;;; counsel-gtags.el --- counsel for GNU global -*- lexical-binding: t; -*-
+;;; counsel-gtags.el --- ivy for GNU global -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2016 by Syohei YOSHIDA
 
@@ -22,7 +22,7 @@
 
 ;;; Commentary:
 
-;; Counsel for GNU global
+;; `counsel-gtags.el' provides `ivy' interface of GNU GLOBAL.
 
 ;;; Code:
 
