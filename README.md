@@ -2,8 +2,6 @@
 
 [GNU GLOBAL](https://www.gnu.org/software/global/) interface of [ivy](https://github.com/abo-abo/swiper).
 
-This package is still developing.
-
 ## Tasks
 
 - [X] Basic commands
