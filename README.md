@@ -20,7 +20,7 @@ This package is still developing.
 
 ## Installation
 
-counsel is not registered MELPA yet.
+counsel-gtags is not registered MELPA yet.
 
 ## Basic Usage
 
