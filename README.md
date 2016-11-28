@@ -1,4 +1,4 @@
-# counsel-gtags.el
+# counsel-gtags.el [![melpa badge][melpa-badge]][melpa-link] [![melpa stable badge][melpa-stable-badge]][melpa-stable-link]
 
 [GNU GLOBAL](https://www.gnu.org/software/global/) interface of [ivy](https://github.com/abo-abo/swiper).
 
@@ -71,3 +71,8 @@ Find name by context.
   (define-key counsel-gtags-mode-map (kbd "M-s") 'counsel-gtags-find-symbol)
   (define-key counsel-gtags-mode-map (kbd "M-,") 'counsel-gtags-pop-stack))
 ```
+
+[melpa-link]: https://melpa.org/#/counsel-gtags
+[melpa-stable-link]: https://stable.melpa.org/#/counsel-gtags
+[melpa-badge]: https://melpa.org/packages/counsel-gtags-badge.svg
+[melpa-stable-badge]: https://stable.melpa.org/packages/counsel-gtags-badge.svg
