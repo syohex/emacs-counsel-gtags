@@ -201,11 +201,8 @@ Always update if value of this variable is nil."
 (defun counsel-gtags--select-file (type tagname &optional extra-options)
   (let* ((root (counsel-gtags--default-directory))
          (encoding buffer-file-coding-system)
-         (comp-fn (lambda (_string)
-                    (let ((default-directory root))
-                      (counsel-gtags--execute type tagname encoding extra-options)))))
-    (ivy-read "Pattern: " comp-fn
-              :dynamic-collection t
+         (default-directory root))
+    (ivy-read "Pattern: " (counsel-gtags--execute type tagname encoding extra-options)
               :unwind (lambda ()
                         (counsel-delete-process)
                         (swiper--cleanup))
