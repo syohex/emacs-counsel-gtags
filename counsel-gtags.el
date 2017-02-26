@@ -153,7 +153,10 @@ Always update if value of this variable is nil."
   (with-ivy-window
     (swiper--cleanup)
     (cl-destructuring-bind (file line) (counsel-gtags--file-and-line candidate)
-      (push (list :file (counsel-gtags--real-file-name) :line (line-number-at-pos))
+      (push (list :file (and (buffer-file-name)
+                             (counsel-gtags--real-file-name))
+                  :buffer (current-buffer)
+                  :line (line-number-at-pos))
             counsel-gtags--context)
       (let ((default-directory counsel-gtags--original-default-directory))
         (find-file file)
@@ -276,10 +279,22 @@ Always update if value of this variable is nil."
 (defun counsel-gtags-pop ()
   "Jump back to previous point."
   (interactive)
-  (let ((context (pop counsel-gtags--context)))
-    (find-file (plist-get context :file))
-    (goto-char (point-min))
-    (forward-line (1- (plist-get context :line)))))
+  (unless counsel-gtags--context
+    (user-error "Stack of contexts is empty"))
+  (catch 'exit
+    (let (context)
+      (while (setq context (pop counsel-gtags--context))
+        (when (cond
+               ((plist-get context :file)
+                (find-file (plist-get context :file)))
+               ((and (plist-get context :buffer)
+                     (buffer-live-p (plist-get context :buffer)))
+                (switch-to-buffer (plist-get context :buffer)))
+               (t
+                nil))
+          (goto-char (point-min))
+          (forward-line (1- (plist-get context :line)))
+          (throw 'exit t))))))
 
 (defun counsel-gtags--make-gtags-sentinel (action)
   (lambda (process _event)
