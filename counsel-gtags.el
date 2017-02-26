@@ -147,7 +147,7 @@ Always update if value of this variable is nil."
         (list (match-string-no-properties 1)
               (string-to-number (match-string-no-properties 2))))
     (let ((fields (split-string candidate ":")))
-      (list (cl-first fields) (string-to-number (cl-second fields))))))
+      (list (cl-first fields) (string-to-number (or (cl-second fields) "1"))))))
 
 (defun counsel-gtags--find-file (candidate)
   (with-ivy-window
@@ -259,7 +259,9 @@ Always update if value of this variable is nil."
                  (forward-line 1))
                (reverse files))))))
     (ivy-read "Find File: " candidates
-              :initial-input default-file)))
+              :initial-input default-file
+              :action #'counsel-gtags--find-file
+              :caller 'counsel-gtags--read-tag)))
 
 (defun counsel-gtags--default-directory ()
   (setq counsel-gtags--original-default-directory
