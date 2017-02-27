@@ -132,10 +132,9 @@ Always update if value of this variable is nil."
       (push "-T" options))
     options))
 
-(defun counsel-gtags--complete-candidates (string type)
+(defun counsel-gtags--complete-candidates (type)
   (let ((cmd-options (counsel-gtags--command-options type)))
     (push "-c" cmd-options)
-    (push (shell-quote-argument string) cmd-options)
     (counsel--async-command
      (mapconcat #'identity (cons "global" (reverse cmd-options)) " "))
     nil))
@@ -163,12 +162,9 @@ Always update if value of this variable is nil."
 
 (defun counsel-gtags--read-tag (type)
   (let ((default-val (thing-at-point 'symbol))
-        (prompt (assoc-default type counsel-gtags--prompts))
-        (comp-fn (lambda (string)
-                   (counsel-gtags--complete-candidates string type))))
-    (ivy-read prompt comp-fn
+        (prompt (assoc-default type counsel-gtags--prompts)))
+    (ivy-read prompt (counsel-gtags--complete-candidates type)
               :initial-input default-val
-              :dynamic-collection t
               :unwind (lambda ()
                         (counsel-delete-process)
                         (swiper--cleanup))
@@ -207,7 +203,7 @@ Always update if value of this variable is nil."
                         (counsel-delete-process)
                         (swiper--cleanup))
               :action #'counsel-gtags--find-file
-              :caller 'counsel-gtags--read-tag)))
+              :caller 'counsel-gtags--select-file)))
 
 ;;;###autoload
 (defun counsel-gtags-find-definition (tagname)
