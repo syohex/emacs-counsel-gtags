@@ -194,19 +194,18 @@ Always update if value of this variable is nil."
          (default-directory default-directory)
          (coding-system-for-read encoding)
          (coding-system-for-write encoding))
-    (counsel--async-command cmd nil)
-    nil))
+    (shell-command-to-string cmd)))
 
-(defun counsel-gtags--select-file (type tagname &optional extra-options)
+(defun counsel-gtags--select-file (type tagname &optional extra-options auto-select-only-candidate)
   (let* ((root (counsel-gtags--default-directory))
          (encoding buffer-file-coding-system)
-         (default-directory root))
-    (ivy-read "Pattern: " (counsel-gtags--execute type tagname encoding extra-options)
-              :unwind (lambda ()
-                        (counsel-delete-process)
-                        (swiper--cleanup))
-              :action #'counsel-gtags--find-file
-              :caller 'counsel-gtags--select-file)))
+         (default-directory root)
+         (collection (split-string (counsel-gtags--execute type tagname encoding extra-options) "\n" t)))
+    (if (and auto-select-only-candidate (= (length collection) 1))
+        (counsel-gtags--find-file (car collection))
+      (ivy-read "Pattern: " collection
+                :action #'counsel-gtags--find-file
+                :caller 'counsel-gtags--select-file))))
 
 ;;;###autoload
 (defun counsel-gtags-find-definition (tagname)
@@ -369,7 +368,7 @@ Generate new TAG file in selected directory with `C-u C-u'"
 (defun counsel-gtags--from-here (tagname)
   (let* ((line (line-number-at-pos))
          (from-here-opt (format "--from-here=%d:%s" line (counsel-gtags--real-file-name))))
-    (counsel-gtags--select-file 'from-here tagname (list from-here-opt))))
+    (counsel-gtags--select-file 'from-here tagname (list from-here-opt) t)))
 
 ;;;###autoload
 (defun counsel-gtags-dwim ()
