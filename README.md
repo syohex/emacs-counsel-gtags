@@ -16,9 +16,19 @@
 - [ ] Tramp support
 - [ ] Windows support
 
+## Requirements
+
+- Emacs 24.3 or higher versions
+- [counsel](https://github.com/abo-abo/swiper)
+- GNU global 6.2.3 or higher versions
+
 ## Installation
 
-counsel-gtags is not registered MELPA yet.
+`counsel-gtags` is available on [MELPA](https://melpa.org/) and [MELPA stable](https://stable.melpa.org/)
+
+You can install `counsel-gtags` with the following command.
+
+<kbd>M-x package-install [RET] counsel-gtags [RET]</kbd>
 
 ## Basic Usage
 
