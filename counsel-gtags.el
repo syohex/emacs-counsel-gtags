@@ -376,9 +376,10 @@ Generate new TAG file in selected directory with `C-u C-u'"
   "Call the counsel-gtags command by current context(Do What I Mean)
 by global --from-here option."
   (interactive)
-  (if (and (buffer-file-name) (thing-at-point 'symbol))
-      (counsel-gtags--from-here (thing-at-point 'symbol))
-    (call-interactively 'counsel-gtags-find-definition)))
+  (let ((cursor-symbol (thing-at-point 'symbol)))
+    (if (and (buffer-file-name) cursor-symbol)
+        (counsel-gtags--from-here (substring-no-properties cursor-symbol))
+      (call-interactively 'counsel-gtags-find-definition))))
 
 (defvar counsel-gtags-mode-name " CounselGtags")
 (defvar counsel-gtags-mode-map (make-sparse-keymap))
