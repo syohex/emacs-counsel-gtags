@@ -39,35 +39,37 @@
   :group 'counsel)
 
 (defcustom counsel-gtags-ignore-case nil
-  "Ignore case in search command."
+  "Whether to ignore case in search pattern."
   :type 'boolean)
 
 (defcustom counsel-gtags-path-style 'root
-  "Candidates path style.
-- `root' shows path from root where tag files are
-- `relative' shows path from current directory
-- `absolute' shows absolute path."
+  "Path style of candidates.
+The following values are supported:
+- `root'     Show path from root of current project.
+- `relative' Show path from current directory.
+- `absolute' Show absolute path."
   :type '(choice (const :tag "Root of the current project" root)
                  (const :tag "Relative from the current directory" relative)
-                 (const :tag "Absolute Path" absolute)))
+                 (const :tag "Absolute path" absolute)))
 
 (defcustom counsel-gtags-auto-update nil
-  "*If non-nil, tag files are updated whenever a file is saved."
+  "Whether to update the tag database when a buffer is saved to file."
   :type 'boolean)
 
 (defcustom counsel-gtags-update-interval-second 60
-  "Tag updating interval seconds.
-Tags are updated at `after-save-hook' after the seconds passed from last update.
-Always update if value of this variable is nil."
-  :type '(choice (integer :tag "Update interval seconds")
+  "Update tag database after this many seconds have passed.
+If nil, the tags are updated every time a buffer is saved to file."
+  :type '(choice (integer :tag "Update after this many seconds")
                  (boolean :tag "Update every time" nil)))
 
 (defcustom counsel-gtags-prefix-key "\C-c"
-  "If non-nil, it is used for the prefix key of gtags-xxx command."
+  "Key binding used for `counsel-gtags-mode-map'.
+This variable does not have any effect unless
+`counsel-gtags-suggested-key-mapping' is non-nil."
   :type 'string)
 
 (defcustom counsel-gtags-suggested-key-mapping nil
-  "If non-nil, suggested key mapping is enabled."
+  "Whether to use the suggested key bindings."
   :type 'boolean)
 
 (defconst counsel-gtags--prompts
@@ -205,21 +207,24 @@ Always update if value of this variable is nil."
 
 ;;;###autoload
 (defun counsel-gtags-find-definition (tagname)
-  "Find `tagname' definition."
+  "Search for TAGNAME definition in tag database.
+Prompt for TAGNAME if not given."
   (interactive
    (list (counsel-gtags--read-tag 'definition)))
   (counsel-gtags--select-file 'definition tagname))
 
 ;;;###autoload
 (defun counsel-gtags-find-reference (tagname)
-  "Find `tagname' references."
+  "Search for TAGNAME reference in tag database.
+Prompt for TAGNAME if not given."
   (interactive
    (list (counsel-gtags--read-tag 'reference)))
   (counsel-gtags--select-file 'reference tagname))
 
 ;;;###autoload
 (defun counsel-gtags-find-symbol (tagname)
-  "Find `tagname' references."
+  "Search for TAGNAME symbol in tag database.
+Prompt for TAGNAME if not given."
   (interactive
    (list (counsel-gtags--read-tag 'symbol)))
   (counsel-gtags--select-file 'symbol tagname))
@@ -262,7 +267,8 @@ Always update if value of this variable is nil."
 
 ;;;###autoload
 (defun counsel-gtags-find-file (filename)
-  "Find `filename' from tagged files."
+  "Search for FILENAME among tagged files.
+Prompt for FILENAME if not given."
   (interactive
    (list (counsel-gtags--read-file-name)))
   (let ((default-directory (counsel-gtags--default-directory)))
@@ -298,7 +304,9 @@ Always update if value of this variable is nil."
 
 ;;;###autoload
 (defun counsel-gtags-create-tags (rootdir label)
-  "Create tag files tags in `rootdir'. This command is asynchronous."
+  "Create tag database in ROOTDIR.
+LABEL is passed as the value for the environment variable GTAGSLABEL.
+Prompt for ROOTDIR and LABEL if not given.  This command is asynchronous."
   (interactive
    (list (read-directory-name "Directory: " nil nil t)
          (counsel-gtags--select-gtags-label)))
@@ -310,7 +318,6 @@ Always update if value of this variable is nil."
     (set-process-sentinel
      proc
      (counsel-gtags--make-gtags-sentinel 'create))))
-
 
 (defun counsel-gtags--real-file-name ()
   (let ((buffile (buffer-file-name)))
@@ -347,8 +354,10 @@ Always update if value of this variable is nil."
 
 ;;;###autoload
 (defun counsel-gtags-update-tags ()
-  "Update TAG file. Update All files with `C-u' prefix.
-Generate new TAG file in selected directory with `C-u C-u'"
+  "Update tag database for current file.
+Changes in other files are ignored.  With a prefix argument, update
+tags for all files.  With two prefix arguments, generate new tag
+database in prompted directory."
   (interactive)
   (let ((how-to (counsel-gtags--how-to-update-tags))
         (interactive-p (called-interactively-p 'interactive))
@@ -368,8 +377,9 @@ Generate new TAG file in selected directory with `C-u C-u'"
 
 ;;;###autoload
 (defun counsel-gtags-dwim ()
-  "Call the counsel-gtags command by current context(Do What I Mean)
-by global --from-here option."
+  "Find definition or reference of thing at point (Do What I Mean).
+If point is at a definition, find its references, otherwise, find
+its definition."
   (interactive)
   (let ((cursor-symbol (thing-at-point 'symbol)))
     (if (and (buffer-file-name) cursor-symbol)
@@ -381,8 +391,9 @@ by global --from-here option."
 
 ;;;###autoload
 (define-minor-mode counsel-gtags-mode ()
-  "Monor mode of counsel-gtags. If `counsel-gtags-update-tags' is non-nil, then
-updating gtags after saving buffer."
+  "Minor mode of counsel-gtags.
+If `counsel-gtags-update-tags' is non-nil, the tag files are updated
+after saving buffer."
   :init-value nil
   :global     nil
   :keymap     counsel-gtags-mode-map
