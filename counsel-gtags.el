@@ -65,10 +65,10 @@ If nil, the tags are updated every time a buffer is saved to file."
 (defcustom counsel-gtags-prefix-key "\C-c"
   "Key binding used for `counsel-gtags-mode-map'.
 This variable does not have any effect unless
-`counsel-gtags-suggested-key-mapping' is non-nil."
+`counsel-gtags-use-suggested-key-map' is non-nil."
   :type 'string)
 
-(defcustom counsel-gtags-suggested-key-mapping nil
+(defcustom counsel-gtags-use-suggested-key-map nil
   "Whether to use the suggested key bindings."
   :type 'boolean)
 
@@ -405,7 +405,7 @@ after saving buffer."
       (remove-hook 'after-save-hook 'counsel-gtags-update-tags t))))
 
 ;; Key mapping of gtags-mode.
-(when counsel-gtags-suggested-key-mapping
+(when counsel-gtags-use-suggested-key-map
   ;; Current key mapping.
   (let ((command-table '(("s" . counsel-gtags-find-symbol)
                          ("r" . counsel-gtags-find-reference)
