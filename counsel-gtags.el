@@ -185,28 +185,23 @@ Always update if value of this variable is nil."
                                         (cygwin-convert-file-name-from-windows dir)
                                       dir)))))))
 
-(defsubst counsel-gtags--construct-command (options &optional input)
-  (mapconcat #'identity (append '("global") options (list (shell-quote-argument input))) " "))
+(defun counsel-gtags--collect-candidates (type tagname encoding extra-options)
+  (let ((options (counsel-gtags--command-options type extra-options))
+        (default-directory default-directory)
+        (coding-system-for-read encoding)
+        (coding-system-for-write encoding))
+    (apply #'process-lines "global" (append (reverse options) (list tagname)))))
 
-(defun counsel-gtags--execute (type tagname encoding extra-options)
-  (let* ((options (counsel-gtags--command-options type extra-options))
-         (cmd (counsel-gtags--construct-command (reverse options) tagname))
-         (default-directory default-directory)
-         (coding-system-for-read encoding)
-         (coding-system-for-write encoding))
-    (counsel--async-command cmd nil)
-    nil))
-
-(defun counsel-gtags--select-file (type tagname &optional extra-options)
+(defun counsel-gtags--select-file (type tagname &optional extra-options auto-select-only-candidate)
   (let* ((root (counsel-gtags--default-directory))
          (encoding buffer-file-coding-system)
-         (default-directory root))
-    (ivy-read "Pattern: " (counsel-gtags--execute type tagname encoding extra-options)
-              :unwind (lambda ()
-                        (counsel-delete-process)
-                        (swiper--cleanup))
-              :action #'counsel-gtags--find-file
-              :caller 'counsel-gtags--select-file)))
+         (default-directory root)
+         (collection (counsel-gtags--collect-candidates type tagname encoding extra-options)))
+    (if (and auto-select-only-candidate (= (length collection) 1))
+        (counsel-gtags--find-file (car collection))
+      (ivy-read "Pattern: " collection
+                :action #'counsel-gtags--find-file
+                :caller 'counsel-gtags--select-file))))
 
 ;;;###autoload
 (defun counsel-gtags-find-definition (tagname)
@@ -369,7 +364,7 @@ Generate new TAG file in selected directory with `C-u C-u'"
 (defun counsel-gtags--from-here (tagname)
   (let* ((line (line-number-at-pos))
          (from-here-opt (format "--from-here=%d:%s" line (counsel-gtags--real-file-name))))
-    (counsel-gtags--select-file 'from-here tagname (list from-here-opt))))
+    (counsel-gtags--select-file 'from-here tagname (list from-here-opt) t)))
 
 ;;;###autoload
 (defun counsel-gtags-dwim ()
