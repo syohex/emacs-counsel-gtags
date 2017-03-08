@@ -71,6 +71,8 @@ This variable does not have any effect unless
 (defcustom counsel-gtags-use-suggested-key-map nil
   "Whether to use the suggested key bindings."
   :type 'boolean)
+(defvaralias 'counsel-gtags-suggested-key-mapping 'counsel-gtags-use-suggested-key-map)
+(make-obsolete-variable 'counsel-gtags-suggested-key-mapping 'counsel-gtags-use-suggested-key-map "0.01")
 
 (defconst counsel-gtags--prompts
   '((definition . "Find Definition: ")
