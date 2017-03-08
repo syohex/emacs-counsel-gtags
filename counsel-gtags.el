@@ -62,6 +62,12 @@ If nil, the tags are updated every time a buffer is saved to file."
   :type '(choice (integer :tag "Update after this many seconds")
                  (boolean :tag "Update every time" nil)))
 
+(defcustom counsel-gtags-use-input-at-point nil
+  "Whether to use input at point.
+If non-nil, the symbol at point is used as default value when
+searching for a tag."
+  :type 'boolean)
+
 (defcustom counsel-gtags-prefix-key "\C-c"
   "Key binding used for `counsel-gtags-mode-map'.
 This variable does not have any effect unless
@@ -168,7 +174,7 @@ This variable does not have any effect unless
         (back-to-indentation)))))
 
 (defun counsel-gtags--read-tag (type)
-  (let ((default-val (thing-at-point 'symbol))
+  (let ((default-val (and counsel-gtags-use-input-at-point (thing-at-point 'symbol)))
         (prompt (assoc-default type counsel-gtags--prompts)))
     (ivy-read prompt (counsel-gtags--complete-candidates type)
               :initial-input default-val
