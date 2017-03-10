@@ -62,7 +62,7 @@ If nil, the tags are updated every time a buffer is saved to file."
   :type '(choice (integer :tag "Update after this many seconds")
                  (boolean :tag "Update every time" nil)))
 
-(defcustom counsel-gtags-use-input-at-point nil
+(defcustom counsel-gtags-use-input-at-point t
   "Whether to use input at point.
 If non-nil, the symbol at point is used as default value when
 searching for a tag."
