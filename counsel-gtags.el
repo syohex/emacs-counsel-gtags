@@ -93,6 +93,7 @@ This variable does not have any effect unless
 
 (defvar counsel-gtags--last-update-time 0)
 (defvar counsel-gtags--context nil)
+(defvar counsel-gtags--context-position 0)
 (defvar counsel-gtags--original-default-directory nil
   "Last `default-directory' where command is invoked.")
 
@@ -162,16 +163,13 @@ This variable does not have any effect unless
   (with-ivy-window
     (swiper--cleanup)
     (cl-destructuring-bind (file line) (counsel-gtags--file-and-line candidate)
-      (push (list :file (and (buffer-file-name)
-                             (counsel-gtags--real-file-name))
-                  :buffer (current-buffer)
-                  :line (line-number-at-pos))
-            counsel-gtags--context)
+      (counsel-gtags--push 'from)
       (let ((default-directory counsel-gtags--original-default-directory))
         (find-file file)
         (goto-char (point-min))
         (forward-line (1- line))
-        (back-to-indentation)))))
+        (back-to-indentation))
+      (counsel-gtags--push 'to))))
 
 (defun counsel-gtags--read-tag (type)
   (let ((default-val (and counsel-gtags-use-input-at-point (thing-at-point 'symbol)))
@@ -283,25 +281,68 @@ Prompt for FILENAME if not given."
     (find-file filename)))
 
 ;;;###autoload
-(defun counsel-gtags-pop ()
-  "Jump back to previous point."
+(defun counsel-gtags-go-backward ()
+  "Go to previous position in context stack."
   (interactive)
   (unless counsel-gtags--context
-    (user-error "Stack of contexts is empty"))
+    (user-error "Context stack is empty"))
   (catch 'exit
-    (let (context)
-      (while (setq context (pop counsel-gtags--context))
-        (when (cond
-               ((plist-get context :file)
-                (find-file (plist-get context :file)))
-               ((and (plist-get context :buffer)
-                     (buffer-live-p (plist-get context :buffer)))
-                (switch-to-buffer (plist-get context :buffer)))
-               (t
-                nil))
-          (goto-char (point-min))
-          (forward-line (1- (plist-get context :line)))
+    (let ((position counsel-gtags--context-position)
+          (num-entries (length counsel-gtags--context)))
+      (while (< (cl-incf position) num-entries)
+        (when (counsel-gtags--goto position)
+          (setq counsel-gtags--context-position position)
           (throw 'exit t))))))
+(defalias 'counsel-gtags-pop 'counsel-gtags-go-backward)
+(make-obsolete 'counsel-gtags-pop 'counsel-gtags-go-backward "0.01")
+
+;;;###autoload
+(defun counsel-gtags-go-forward ()
+  "Go to next position in context stack."
+  (interactive)
+  (unless counsel-gtags--context
+    (user-error "Context stack is empty"))
+  (catch 'exit
+    (let ((position counsel-gtags--context-position))
+      (while (>= (cl-decf position) 0)
+        (when (counsel-gtags--goto position)
+          (setq counsel-gtags--context-position position)
+          (throw 'exit t))))))
+
+(defun counsel-gtags--goto (position)
+  "Go to POSITION in context stack.
+Return t on success, nil otherwise."
+  (let ((context (nth position counsel-gtags--context)))
+    (when (and context
+               (cond
+                ((plist-get context :file)
+                 (find-file (plist-get context :file)))
+                ((and (plist-get context :buffer)
+                      (buffer-live-p (plist-get context :buffer)))
+                 (switch-to-buffer (plist-get context :buffer)))
+                (t
+                 nil)))
+      (goto-char (point-min))
+      (forward-line (1- (plist-get context :line)))
+      t)))
+
+(defun counsel-gtags--push (direction)
+  "Add new entry to context stack."
+  (let ((new-context (list :file (and (buffer-file-name)
+                                      (counsel-gtags--real-file-name))
+                           :buffer (current-buffer)
+                           :line (line-number-at-pos)
+                           :direction direction)))
+    (setq counsel-gtags--context
+          (nthcdr counsel-gtags--context-position counsel-gtags--context))
+    ;; We do not want successive entries with from-direction,
+    ;; so we remove the old one.
+    (let ((prev-context (car counsel-gtags--context)))
+      (if (and (eq direction 'from)
+               (eq (plist-get prev-context :direction) 'from))
+          (pop counsel-gtags--context)))
+    (push new-context counsel-gtags--context)
+    (setq counsel-gtags--context-position 0)))
 
 (defun counsel-gtags--make-gtags-sentinel (action)
   (lambda (process _event)
@@ -428,8 +469,8 @@ after saving buffer."
 
     ;; common
     (define-key counsel-gtags-mode-map "\C-]" 'counsel-gtags--from-here)
-    (define-key counsel-gtags-mode-map "\C-t" 'counsel-gtags-pop)
-    (define-key counsel-gtags-mode-map "\e*" 'counsel-gtags-pop)
+    (define-key counsel-gtags-mode-map "\C-t" 'counsel-gtags-go-backward)
+    (define-key counsel-gtags-mode-map "\e*" 'counsel-gtags-go-backward)
     (define-key counsel-gtags-mode-map "\e." 'counsel-gtags-find-definition)))
 
 (provide 'counsel-gtags)
