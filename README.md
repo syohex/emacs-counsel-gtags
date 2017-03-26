@@ -32,31 +32,38 @@ You can install `counsel-gtags` with the following command.
 
 ## Basic Usage
 
+You can search for tags or files in the database. Every time you jump to a
+definition, reference or symbol the current position is pushed to the context
+stack. You can navigate backward and forward within this stack with
+`counsel-gtags-go-backward` and `counsel-gtags-go-forward`.
+
 #### counsel-gtags-find-definition
 
-Move to definition
-
-Move command push current position to stack. `counsel-gtags-pop` command pops point stack and jump back to previous point.
+Search for definition.
 
 #### counsel-gtags-find-reference
 
-Move to references
+Search for references.
 
 #### counsel-gtags-find-symbol
 
-Move to symbol references
+Search for symbol references.
 
 #### counsel-gtags-find-file
 
-Find file from tagged files
+Search for file among tagged files.
 
-#### counsel-gtags-pop
+#### counsel-gtags-go-backward
 
-Move to previous point on stack
+Go to previous position in context stack.
+
+#### counsel-gtags-go-forward
+
+Go to next position in context stack.
 
 #### counsel-gtags-create-tags
 
-Create GNU GLOBAL tag
+Create GNU GLOBAL tags.
 
 #### counsel-gtags-update-tags
 
@@ -79,7 +86,7 @@ Find name by context.
   (define-key counsel-gtags-mode-map (kbd "M-t") 'counsel-gtags-find-definition)
   (define-key counsel-gtags-mode-map (kbd "M-r") 'counsel-gtags-find-reference)
   (define-key counsel-gtags-mode-map (kbd "M-s") 'counsel-gtags-find-symbol)
-  (define-key counsel-gtags-mode-map (kbd "M-,") 'counsel-gtags-pop-stack))
+  (define-key counsel-gtags-mode-map (kbd "M-,") 'counsel-gtags-go-backward))
 ```
 
 [melpa-link]: https://melpa.org/#/counsel-gtags
