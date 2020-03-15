@@ -1,3 +1,5 @@
+This package is no longer maintained. If you have an issue or pull request, please send it to https://github.com/FelipeLema/emacs-counsel-gtags
+
 # counsel-gtags.el [![melpa badge][melpa-badge]][melpa-link] [![melpa stable badge][melpa-stable-badge]][melpa-stable-link]
 
 [GNU GLOBAL](https://www.gnu.org/software/global/) interface of [ivy](https://github.com/abo-abo/swiper).
